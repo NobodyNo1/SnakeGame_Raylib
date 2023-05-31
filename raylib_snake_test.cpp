@@ -34,7 +34,7 @@ int snakeCurrentSize = SNAKE_START_SIZE;
 
 const int FRAME_UPDATE = 30;
 
-sconst int GAME_STATE_PAUSE = 0;
+const int GAME_STATE_PAUSE = 0;
 const int GAME_STATE_ACTIVE = 1;
 const int GAME_STATE_END = 2;
 
@@ -212,12 +212,6 @@ int main(void)
     
     SetTargetFPS(FRAME_UPDATE);
 
-    for(int i = 0; i < GRID_COLUMS; i++) {
-        for(int j = 0; j < GRID_ROWS; j++) {
-            printf("%d ", grid[GRID_ROWS*i + j]);
-        }
-        printf("\n");
-    }
     char* startText = "PRESS \"SPACE\" KEY TO START";
     
     while (!WindowShouldClose())

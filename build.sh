@@ -1,0 +1,1 @@
+gcc raylib_snake_test.cpp -framework IOKit -framework Cocoa -framework OpenGL `pkg-config --libs --cflags raylib` -o raylib_snake_test --std=c++11
