@@ -47,6 +47,14 @@ const int GAME_STATE_END = 2;
 
 int gameState = GAME_STATE_PAUSE;
 int updateRate = 0;
+
+
+
+#define BACKGROUND_COLOR        CLITERAL(Color) { 51, 15, 10, 255 } // #EA526F    -
+#define CELL_COLOR              CLITERAL(Color) { 57, 79, 73,  255 } // #FF8A5B    -
+#define SNAKE_COLOR             CLITERAL(Color) { 101, 116, 58, 255 } // #FCEADE    -
+#define TEXT_COLOR              CLITERAL(Color) { 244, 253, 175, 255 } // #FFFFFF   -
+#define FOOD_COLOR         CLITERAL(Color) { 239, 221, 141, 255 } // #25CED1   -
 #define MAX_UPDATE_RATE 4
 
 struct Position {
@@ -157,15 +165,16 @@ void handleKeyEvents(){
 void renderGame(int gridStartX, int gridStartY, int squareSize) {
     for(int i = 0; i < GRID_COLUMS; i++) {
         for(int j = 0; j < GRID_ROWS; j++) {
-            Color currentColor = BEIGE; // empty by default
+            Color currentColor;
+            currentColor = CELL_COLOR; // empty by default
             int cell = grid[GRID_ROWS*i + j];
             if(cell == 1){
                 // head color
-                currentColor = GREEN;
+                currentColor = TEXT_COLOR;
             } else if (cell > 1){
-                currentColor = LIME;
+                currentColor = SNAKE_COLOR;
             } else if(cell == -1) {
-                currentColor = RED;
+                currentColor = FOOD_COLOR;
             }
             DrawRectangle(
                 gridStartX + ((squareSize + CELL_SPACE) * j),
@@ -211,14 +220,13 @@ int main(void)
     int paddingByY = (drawHeight - ((squareSize + CELL_SPACE) * GRID_COLUMS))/2;
     
     SetTargetFPS(FRAME_UPDATE);
-
-    char* startText = "PRESS \"SPACE\" KEY TO START";
+    const char* startText = "PRESS \"SPACE\" KEY TO START";
     
     while (!WindowShouldClose())
     {
         BeginDrawing();
             ClearBackground(RAYWHITE);
-            DrawRectangle(drawStartX, drawStartY, drawWidth, drawHeight, GRAY);
+            DrawRectangle(drawStartX, drawStartY, drawWidth, drawHeight, BACKGROUND_COLOR);
             if(gameState == GAME_STATE_ACTIVE) {
                 handleKeyEvents();
                 updateRate++;
