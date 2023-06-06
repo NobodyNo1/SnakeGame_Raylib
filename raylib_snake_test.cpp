@@ -6,6 +6,7 @@
 // 2. Logic to increase speed
 // 3. Food generation improvement (state where most of cells are snake's body)
 // 4. Build for android
+// 5. add snake AI 
 
 #include "raylib.h"
 #include <stdio.h>
@@ -20,6 +21,7 @@
 #define GAME_STATE_PAUSE    0
 #define GAME_STATE_ACTIVE   1
 #define GAME_STATE_END      2
+#define GAME_STATE_WIN      3
 
 #define DRAW_AREA_PADDING   80
 
@@ -57,7 +59,7 @@ int lastPressedKey = DIRECTION_UP;
 
 const double SUGGESTED_RATIO_FOR_GRID = (double) WINDOW_HEIGHT / WINDOW_WIDTH;
 
-const int GRID_COLUMS = 20 ;
+const int GRID_COLUMS = 10 ;
 const int GRID_ROWS = (int) (GRID_COLUMS / SUGGESTED_RATIO_FOR_GRID);
 
 const int size = GRID_ROWS*GRID_COLUMS;
@@ -65,6 +67,9 @@ int grid[size];
 
 int snakeDirection   =  DIRECTION_UP;
 int snakeCurrentSize =  SNAKE_START_SIZE;
+
+double gameStartTime = 0.0;
+double gameRunTime = 0.0;
 
 struct Position {
     int row;
@@ -110,8 +115,8 @@ void runTimeGenerateFoodPosition() {
     }
 }
 
-
-void generateGrid() {
+void generateGrid(bool isPreview) {
+    gameStartTime = 0.0;
     updateRate = 0;
     snakeDirection = DIRECTION_UP;
     lastPressedKey = DIRECTION_UP;
@@ -124,7 +129,8 @@ void generateGrid() {
 
     snakeHeadPosition.row = (int)(GRID_ROWS/2);
     snakeHeadPosition.column = GRID_COLUMS/2 - 1;
-    runTimeGenerateFoodPosition();
+    if(!isPreview)
+        runTimeGenerateFoodPosition();
 
     // assume snake always looking up
     // Make sure that start size is not outside of bounds
@@ -141,15 +147,12 @@ void generateGrid() {
     //       (-1) is apple
     // - 0 is empty space
     
-    // put snake into grid
-    
     
     // snake body (assume snake always looking up)
     for (int i = 0; i < snakeCurrentSize; i++) {
         int y = snakeHeadPosition.column + i;
         grid[y*GRID_ROWS + snakeHeadPosition.row] = i+1;
     }
-    //grid[snakeHeadPosition.column*GRID_ROWS + snakeHeadPosition.row] = 1;
 }
 
 
@@ -254,8 +257,12 @@ void updateSnakePosition() {
             gameState = GAME_STATE_END;
             return;
         }
-    if(grid[snakeHeadPosition.column*GRID_ROWS + snakeHeadPosition.row] == -1){
+    if(grid[snakeHeadPosition.column*GRID_ROWS + snakeHeadPosition.row] == -1) {
         snakeCurrentSize++;
+        if(snakeCurrentSize == GRID_COLUMS * GRID_COLUMS){
+            gameState = GAME_STATE_WIN;
+            return;
+        }
         runTimeGenerateFoodPosition();
     } else if(grid[snakeHeadPosition.column*GRID_ROWS + snakeHeadPosition.row] > 0){
         gameState = GAME_STATE_END;
@@ -291,9 +298,11 @@ void renderGame(
     int gridStartX, int gridStartY, int squareSize
 ) {
     DrawRectangle(DRAW_START_X, DRAW_START_Y, DRAW_WIDTH, DRAW_HEIGHT, BACKGROUND_COLOR);
-    if(gameState == GAME_STATE_END){
-        DrawText("LOSE", WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 40, LIGHTGRAY);
-     
+    if(gameState == GAME_STATE_END || gameState == GAME_STATE_WIN){
+        const char *title = gameState == GAME_STATE_END ? "LOSE": "WIN"; 
+        int titlePlacementX = (WINDOW_WIDTH-MeasureText(title, 40))/2;
+        DrawText(title, titlePlacementX, WINDOW_HEIGHT/2 - 40, 40, LIGHTGRAY);
+        DrawText(TextFormat("Time: %.2f\n Size: %d", gameRunTime, snakeCurrentSize), titlePlacementX-10, WINDOW_HEIGHT/2 + 40, 20, LIGHTGRAY);
         return;
     }
     for(int i = 0; i < GRID_COLUMS; i++) {
@@ -330,8 +339,8 @@ int main(void)
     
     // Drawing area sizes
     
-    // todo: input data to grid
-    generateGrid();
+    // Preview
+    generateGrid(true);
     // Grid 
     // 1. CELLS - square size
     // 2. There are some padding between
@@ -358,18 +367,21 @@ int main(void)
             handleKeyEvents();
             updateRate++;
             updateRate = updateRate % (SNAKE_SPEED);
+            gameRunTime = GetTime() - gameStartTime;
             if(updateRate == 0)
                 updateSnakePosition();
             
         } else if (gameState == GAME_STATE_END) {
             
             if(IsKeyPressed(KEY_SPACE)){
-                generateGrid();
+                generateGrid(true);
                 gameState = GAME_STATE_PAUSE;
             }
         } else if(gameState == GAME_STATE_PAUSE){
             if(IsKeyPressed(KEY_SPACE)){
+                generateGrid(false);
                 gameState = GAME_STATE_ACTIVE;
+                gameStartTime = GetTime();
             }
         }
             
@@ -378,9 +390,10 @@ int main(void)
             renderGame(paddingByX + DRAW_START_X, paddingByY + DRAW_START_Y, squareSize);
 
             DrawText(TextFormat("ROWxCOLUMNS: %d x %d", GRID_ROWS, GRID_COLUMS), DRAW_AREA_PADDING, WINDOW_HEIGHT - DRAW_AREA_PADDING, 20, SNAKE_HEAD_COLOR);
-            DrawText(TextFormat("INFO (lastPressedKey): %d", lastPressedKey), DRAW_AREA_PADDING, WINDOW_HEIGHT - DRAW_AREA_PADDING+20, 20, SNAKE_HEAD_COLOR);
-
-            DrawText(TextFormat("Time: %.2f", GetTime()), WINDOW_WIDTH-DRAW_AREA_PADDING*4, DRAW_AREA_PADDING/2, 20, SNAKE_HEAD_COLOR);
+            if(gameState == GAME_STATE_ACTIVE){
+                DrawText(TextFormat("Time: %.2f", gameRunTime), WINDOW_WIDTH-DRAW_AREA_PADDING*4, DRAW_AREA_PADDING/2, 20, SNAKE_HEAD_COLOR);
+                DrawText(TextFormat("INFO (lastPressedKey): %d", lastPressedKey), DRAW_AREA_PADDING, WINDOW_HEIGHT - DRAW_AREA_PADDING+20, 20, SNAKE_HEAD_COLOR);
+            }
         EndDrawing();
     }
 
