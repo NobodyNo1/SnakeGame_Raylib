@@ -1,10 +1,8 @@
 // SNAKE game implemented using raylib
 
 // TODO: 
-// 1. Improve UI 
-//      - Add Score and Play time
-// 2. Logic to increase speed
-// 3. Food generation improvement (state where most of cells are snake's body)
+// 2. Logic to increase speed +- 
+// 3. Food generation improvement (state where most of cells are snake's body) ?
 // 4. Build for android
 // 5. add snake AI 
 
@@ -44,7 +42,8 @@
 #define SNAKE_COLOR             CLITERAL(Color) { 47, 72, 235, 255 } // #FCEADE    -
 #define SNAKE_HEAD_COLOR        CLITERAL(Color) { 32, 212, 206, 255 } // #FFFFFF   -
 #define FOOD_COLOR              CLITERAL(Color) { 245, 23, 0, 255 } // #25CED1   -
-#define SNAKE_SPEED             4 // FPS/SNAKE_SPEED is how much update of movement happens per second 
+#define DEFAULT_SNAKE_SPEED         8 // FPS/SNAKE_SPEED is how much update of movement happens per second 
+#define ACCELARATED_SNAKE_SPEED     2 // FPS/SNAKE_SPEED is how much update of movement happens per second 
 
 const int DRAW_START_X = DRAW_AREA_PADDING;
 const int DRAW_START_Y = DRAW_AREA_PADDING;
@@ -56,6 +55,8 @@ const char* START_TEXT = "PRESS \"SPACE\" KEY TO START";
 int gameState = GAME_STATE_PAUSE;
 int updateRate = 0;
 int lastPressedKey = DIRECTION_UP;
+
+int snakeSpeed = DEFAULT_SNAKE_SPEED;
 
 const double SUGGESTED_RATIO_FOR_GRID = (double) WINDOW_HEIGHT / WINDOW_WIDTH;
 
@@ -276,9 +277,40 @@ void updateSnakePosition() {
     }
     grid[snakeHeadPosition.column*GRID_ROWS + snakeHeadPosition.row] = 1;
 }
+/* For accerated movements (holding same directional key)
+void accerationMovement(int direction) {
+    if (direction == snakeDirection)
+    {
+        snakeSpeed = ACCELARATED_SNAKE_SPEED;
+        return;
+    } else{
+        lastPressedKey = direction; 
+    }
+}
 
-void handleKeyEvents(){
-    // add logic to speed if same direction key is hold
+void handleKeyEvents() {
+    if(!IsKeyDown(KEY_W) && !IsKeyDown(KEY_D) && !IsKeyDown(KEY_S) && !IsKeyDown(KEY_A)) {
+        snakeSpeed = DEFAULT_SNAKE_SPEED;
+    }
+    if(snakeDirection != DIRECTION_DOWN && IsKeyDown(KEY_W)) {
+        accerationMovement(DIRECTION_UP)
+    } 
+    if(snakeDirection != DIRECTION_LEFT && IsKeyDown(KEY_D)){
+        accerationMovement(DIRECTION_RIGHT);
+    } 
+    if(snakeDirection != DIRECTION_UP && IsKeyDown(KEY_S)){
+        accerationMovement(DIRECTION_DOWN);
+    } 
+    if(snakeDirection != DIRECTION_RIGHT && IsKeyDown(KEY_A)){
+        accerationMovement(DIRECTION_LEFT);
+    }
+}
+*/
+void handleKeyEvents() {
+    // if(IsKeyDown(KEY_SPACE))
+    //     snakeSpeed = ACCELARATED_SNAKE_SPEED;
+    // else
+    //     snakeSpeed = DEFAULT_SNAKE_SPEED;
     if(snakeDirection != DIRECTION_DOWN && IsKeyPressed(KEY_W)){
         lastPressedKey = DIRECTION_UP;
     } 
@@ -287,7 +319,7 @@ void handleKeyEvents(){
     } 
     if(snakeDirection != DIRECTION_UP && IsKeyPressed(KEY_S)){
         lastPressedKey = DIRECTION_DOWN;
-        
+
     } 
     if(snakeDirection != DIRECTION_RIGHT &&IsKeyPressed(KEY_A)){
         lastPressedKey = DIRECTION_LEFT;
@@ -366,7 +398,7 @@ int main(void)
         if(gameState == GAME_STATE_ACTIVE) {
             handleKeyEvents();
             updateRate++;
-            updateRate = updateRate % (SNAKE_SPEED);
+            updateRate = updateRate % (snakeSpeed);
             gameRunTime = GetTime() - gameStartTime;
             if(updateRate == 0)
                 updateSnakePosition();
